@@ -1254,6 +1254,32 @@ class CZ(Gate):
     def qasm_label(self) -> str:
         return "cz"
 
+class ConditionalGate(Gate):
+    """Conditional Gate
+    Allows to perform quantum gates conditioned on classical values.
+
+
+    Args:
+        q0 (int): the control qubit id number.
+        q1 (int): the target qubit id number.
+    """
+
+    def __init__(self, q0: int, q1: int):
+        super().__init__()
+        self.name = "cx"
+        self.draw_label = "X"
+        self.control_qubits = (q0,)
+        self.target_qubits = (q1,)
+        self.init_args = [q0, q1]
+        self.unitary = True
+
+    @property
+    def clifford(self) -> bool:
+        return False
+
+    @property
+    def qasm_label(self) -> str:
+        return "if"
 
 class CSX(Gate):
     """The Controlled-:math:`\\sqrt{X}` gate.
