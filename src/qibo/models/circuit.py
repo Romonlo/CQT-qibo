@@ -1172,8 +1172,13 @@ class Circuit:
             code.append(f"creg {register}[{len(qubits)}];")
 
         # Add gates
+        ereg = 0 #ereg from extra register
         for gate in self.queue:
             if isinstance(gate, gates.M):
+                if gate.collapse:
+                    ereg+=1 #ereg from extra_register
+                    code.append(f"creg e{ereg}[0]")
+                    code.append(f"measure q[{gate.target_qubits[0]}] -> e{ereg}[0];")
                 continue
 
             if gate.is_controlled_by:
