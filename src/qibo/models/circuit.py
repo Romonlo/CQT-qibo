@@ -682,6 +682,7 @@ class Circuit:
                 gate.result.circuit = self
                 if gate.collapse:
                     self.has_collapse = True
+                    self.mcm.append(gate)
                 else:
                     self.measurements.append(gate)
 
@@ -1212,7 +1213,7 @@ class Circuit:
         return "\n".join(code)
 
     def to_qasm3(self, extended_compatibility: bool = False) -> str:
-        """Convert circuit to a QASM string.
+        """Convert circuit to a QASM3 string.
 
         Args:
             extended_compatibility (bool): if ``True``, unrolls more exotic gates
@@ -1244,14 +1245,24 @@ class Circuit:
                 )
             code.append(f"creg {register}[{len(qubits)}];")
 
+        # set mid-circuit-measurements
+        for mcm in self.mcm:
+            register = mcm.register_name
+            qubits = mcm.target_qubits
+            if not register.islower():
+                raise_error(
+                    NameError,
+                    "OpenQASM does not support capital letters in "
+                    + f"register names but {register} was used",
+                )
+            code.append(f"creg {register}[{len(qubits)}];")
+
+
         # Add gates
-        ereg = 0 #ereg from extra register
         for gate in self.queue:
             if isinstance(gate, gates.M):
                 if gate.collapse:
-                    ereg+=1 #ereg from extra_register
-                    code.append(f"creg e{ereg}[0]")
-                    code.append(f"measure q[{gate.target_qubits[0]}] -> e{ereg}[0];")
+                    code.append(f"measure q[{gate.target_qubits[0]}] -> {gate.register_name}[0];")
                 continue
             if isinstance(gate, gates.Condition):
                 rn = gate.register_name
